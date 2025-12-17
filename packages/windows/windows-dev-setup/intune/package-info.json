@@ -1,0 +1,72 @@
+{
+  "name": "Windows Dev Setup",
+  "version": "2.0.0",
+  "identifier": "com.sbsfederal.windowsdevsetup",
+  "publisher": "SBS Federal IT Department",
+  "description": "Automated developer environment setup for Windows endpoints with comprehensive logging and Intune deployment support",
+  "category": "Productivity",
+  "display_name": "Windows Developer Environment Setup",
+  "install_command": "powershell.exe -ExecutionPolicy Bypass -NoProfile -File install.ps1",
+  "uninstall_command": "powershell.exe -ExecutionPolicy Bypass -NoProfile -File uninstall.ps1",
+  "detection_script": "detection.ps1",
+  "minimum_os": "10.0.17763",
+  "architecture": "x64",
+  "install_experience": {
+    "run_as_account": "system",
+    "device_restart_behavior": "basedOnReturnCode"
+  },
+  "requirements": {
+    "disk_space_mb": 10240,
+    "memory_mb": 4096,
+    "processor": "x64"
+  },
+  "return_codes": {
+    "0": {
+      "type": "success",
+      "description": "Installation completed successfully"
+    },
+    "1": {
+      "type": "failed",
+      "description": "Installation failed"
+    },
+    "3010": {
+      "type": "softReboot",
+      "description": "Installation succeeded, reboot required"
+    }
+  },
+  "features": [
+    "Automatic Chocolatey installation",
+    "Forced Windows Updates every 4 days",
+    "Smart installation checks",
+    "Desktop and Start Menu shortcuts",
+    "Comprehensive logging",
+    "Individual error handling",
+    "GitHub/GitLab integration",
+    "Cloud CLI tools (AWS, Azure, GCP)",
+    "Kubernetes tools (kubectl, Helm, K9s)",
+    "Infrastructure as Code (Terraform, Ansible)",
+    "Container support (Docker)",
+    "Database tools",
+    "API development tools"
+  ],
+  "applications_installed": [
+    "Git, GitHub CLI, GitHub Desktop",
+    "Python, Node.js, OpenJDK, Go, .NET SDK",
+    "Maven, Gradle",
+    "Visual Studio Code, IntelliJ IDEA Community",
+    "Docker Desktop",
+    "Windows Terminal",
+    "AWS CLI, Azure CLI, Google Cloud SDK",
+    "kubectl, Helm, K9s",
+    "Terraform, Ansible",
+    "Obsidian, Notion",
+    "Postman, Insomnia",
+    "DBeaver, TablePlus, MongoDB Compass",
+    "cURL, wget, jq"
+  ],
+  "support": {
+    "company": "SBS Federal",
+    "email": "it@sbsfederal.com",
+    "documentation": "See docs/README.md"
+  }
+}
