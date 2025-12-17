@@ -1,0 +1,92 @@
+{
+  "package": {
+    "name": "Mac Development Environment Setup",
+    "version": "2.0.0",
+    "build": "001",
+    "identifier": "com.company.macdevsetup",
+    "description": "Automated development environment setup for macOS with Homebrew, development tools, and IDEs",
+    "category": "Productivity",
+    "developer": "IT Department",
+    "minimum_os": "10.15",
+    "architecture": ["x86_64", "arm64"]
+  },
+  "intune": {
+    "display_name": "Mac Dev Setup",
+    "publisher": "Your Company IT",
+    "description": "Installs and configures a complete development environment including Docker, VS Code, Cursor, IntelliJ, database tools, and cloud CLIs. Automatically updates macOS and packages every 4 days.",
+    "information_url": "https://your-company-docs.com/mac-dev-setup",
+    "privacy_url": "https://your-company.com/privacy",
+    "category": "Productivity",
+    "show_in_company_portal": true,
+    "featured_app": false
+  },
+  "requirements": {
+    "minimum_os_version": "10.15",
+    "minimum_disk_space_gb": 30,
+    "internet_required": true,
+    "admin_rights_required": true
+  },
+  "installation": {
+    "install_command": "/bin/bash install.sh",
+    "uninstall_command": "/bin/bash uninstall.sh",
+    "detection_script": "detection.sh",
+    "preinstall_script": "preinstall.sh",
+    "postinstall_script": "postinstall.sh"
+  },
+  "applications_installed": {
+    "gui": [
+      "Docker",
+      "Podman",
+      "iTerm2",
+      "Visual Studio Code",
+      "Cursor",
+      "IntelliJ IDEA CE",
+      "Obsidian",
+      "Postman",
+      "pgAdmin4",
+      "TablePlus",
+      "DBeaver Community",
+      "MongoDB Compass",
+      "GitHub Desktop",
+      "GitLab Desktop"
+    ],
+    "cli": [
+      "git",
+      "GitHub CLI (gh)",
+      "GitLab CLI (glab)",
+      "Maven",
+      "Node.js",
+      "Python",
+      "OpenJDK",
+      "Go",
+      ".NET",
+      "kubectl",
+      "Helm",
+      "AWS CLI",
+      "Azure CLI",
+      "Google Cloud SDK",
+      "Terraform",
+      "Ansible",
+      "k9s",
+      "curl",
+      "HTTPie",
+      "k6",
+      "Coder"
+    ]
+  },
+  "features": [
+    "Automatic Homebrew installation",
+    "Forced system updates every 4 days",
+    "Smart installation (skips existing packages)",
+    "Desktop shortcuts for quick access",
+    "Comprehensive logging",
+    "Individual error handling",
+    "Color-coded terminal output",
+    "GitHub and GitLab integration"
+  ],
+  "support": {
+    "contact": "itsupport@company.com",
+    "documentation": "/Library/Application Support/MacDevSetup/",
+    "logs": "/Library/Logs/MacDevSetup/"
+  }
+}
