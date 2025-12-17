@@ -383,4 +383,4 @@ cd packages/*/intune/
 
 ---
 
-🤖 *Generated and maintained with Claude Code*
+🤖 *Generated and maintained by Kevin White
