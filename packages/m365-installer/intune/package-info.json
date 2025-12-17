@@ -1,0 +1,83 @@
+{
+  "package": {
+    "name": "Microsoft 365 Installer",
+    "version": "1.0.0",
+    "build": "001",
+    "identifier": "com.sbsfederal.m365installer",
+    "description": "Automated installer for Microsoft 365 applications on macOS with comprehensive logging and error handling",
+    "category": "Productivity",
+    "developer": "SBS Federal IT Department",
+    "minimum_os": "10.14",
+    "architecture": ["x86_64", "arm64"]
+  },
+  "intune": {
+    "display_name": "Microsoft 365 Installer",
+    "publisher": "SBS Federal IT",
+    "description": "Automatically downloads and installs Microsoft 365 applications including Office Suite, Teams, OneDrive, Edge, and Company Portal. Provides desktop shortcuts and automatic update configuration.",
+    "information_url": "https://www.microsoft.com/microsoft-365",
+    "privacy_url": "https://privacy.microsoft.com",
+    "category": "Productivity",
+    "show_in_company_portal": true,
+    "featured_app": true
+  },
+  "requirements": {
+    "minimum_os_version": "10.14",
+    "minimum_disk_space_gb": 10,
+    "internet_required": true,
+    "admin_rights_required": true
+  },
+  "installation": {
+    "install_command": "/bin/bash install.sh",
+    "uninstall_command": "/bin/bash uninstall.sh",
+    "detection_script": "detection.sh",
+    "preinstall_script": "preinstall.sh",
+    "postinstall_script": "postinstall.sh"
+  },
+  "applications_installed": {
+    "core_applications": [
+      "Microsoft Word",
+      "Microsoft Excel",
+      "Microsoft PowerPoint",
+      "Microsoft Outlook",
+      "Microsoft OneNote"
+    ],
+    "additional_applications": [
+      "Microsoft Teams",
+      "Microsoft OneDrive",
+      "Microsoft Edge",
+      "Company Portal"
+    ],
+    "app_store_optional": [
+      "Microsoft Remote Desktop",
+      "Microsoft To Do"
+    ],
+    "mdm_optional": [
+      "Microsoft Defender"
+    ]
+  },
+  "features": [
+    "Automatic download from Microsoft CDN",
+    "Smart detection of existing installations",
+    "Comprehensive error handling and logging",
+    "Desktop shortcuts creation",
+    "Automatic update configuration",
+    "Progress tracking and status reporting",
+    "Post-installation instructions",
+    "SBS Federal branding",
+    "Command-line interface: m365-install",
+    "Desktop launcher included"
+  ],
+  "download_sources": {
+    "office_suite": "https://go.microsoft.com/fwlink/?linkid=525133",
+    "teams": "https://go.microsoft.com/fwlink/?linkid=869428",
+    "onedrive": "https://go.microsoft.com/fwlink/?linkid=823060",
+    "edge": "https://go.microsoft.com/fwlink/?linkid=2093504",
+    "company_portal": "https://go.microsoft.com/fwlink/?linkid=853070"
+  },
+  "support": {
+    "contact": "it@sbsfederal.com",
+    "documentation": "/Library/Application Support/M365Installer/",
+    "logs": "/Library/Logs/M365Installer/",
+    "user_logs": "~/.m365-installer/installer.log"
+  }
+}
