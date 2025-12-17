@@ -1,0 +1,95 @@
+{
+  "package": {
+    "name": "NIST 800-53 Compliance Scanner",
+    "version": "1.0.0",
+    "build": "001",
+    "identifier": "com.sbsfederal.compliancescanner",
+    "description": "Automated NIST 800-53 security compliance scanner for macOS endpoints with detailed HTML and JSON reporting",
+    "category": "Security",
+    "developer": "SBS Federal IT Department",
+    "minimum_os": "10.15",
+    "architecture": ["x86_64", "arm64"]
+  },
+  "intune": {
+    "display_name": "NIST 800-53 Compliance Scanner",
+    "publisher": "SBS Federal IT",
+    "description": "Scans macOS endpoints for NIST 800-53 compliance controls including access control, audit/accountability, configuration management, identification/authentication, system protection, and information integrity. Generates detailed HTML and JSON reports with recommendations for security improvements.",
+    "information_url": "https://csrc.nist.gov/publications/detail/sp/800-53/rev-5/final",
+    "privacy_url": "https://sbsfederal.com/privacy",
+    "category": "Security & Compliance",
+    "show_in_company_portal": true,
+    "featured_app": true
+  },
+  "requirements": {
+    "minimum_os_version": "10.15",
+    "minimum_disk_space_gb": 1,
+    "internet_required": false,
+    "admin_rights_required": false
+  },
+  "installation": {
+    "install_command": "/bin/bash install.sh",
+    "uninstall_command": "/bin/bash uninstall.sh",
+    "detection_script": "detection.sh",
+    "preinstall_script": "preinstall.sh",
+    "postinstall_script": "postinstall.sh"
+  },
+  "compliance_controls": {
+    "ac_family": [
+      "AC-2: Account Management",
+      "AC-7: Unsuccessful Login Attempts",
+      "AC-8: System Use Notification",
+      "AC-11: Session Lock",
+      "AC-17: Remote Access"
+    ],
+    "au_family": [
+      "AU-2: Audit Events",
+      "AU-3: Content of Audit Records",
+      "AU-9: Protection of Audit Information"
+    ],
+    "cm_family": [
+      "CM-6: Configuration Settings",
+      "CM-7: Least Functionality"
+    ],
+    "ia_family": [
+      "IA-2: Identification and Authentication",
+      "IA-5: Authenticator Management",
+      "IA-5(1): Password Complexity"
+    ],
+    "sc_family": [
+      "SC-7: Boundary Protection",
+      "SC-8: Transmission Confidentiality",
+      "SC-13: Cryptographic Protection",
+      "SC-28: Protection of Information at Rest"
+    ],
+    "si_family": [
+      "SI-2: Flaw Remediation",
+      "SI-3: Malicious Code Protection",
+      "SI-4: Information System Monitoring",
+      "SI-7: Software and Information Integrity"
+    ],
+    "mp_family": [
+      "MP-7: Media Use"
+    ],
+    "pe_family": [
+      "PE-3: Physical Access Control"
+    ]
+  },
+  "features": [
+    "Scans 25+ NIST 800-53 security controls",
+    "Generates HTML and JSON reports",
+    "Color-coded compliance scoring",
+    "Detailed remediation recommendations",
+    "System inventory collection",
+    "Automatic report generation",
+    "Command-line interface: compliance-scan",
+    "Optional weekly automated scans",
+    "Shared report repository",
+    "Zero user configuration required"
+  ],
+  "support": {
+    "contact": "it@sbsfederal.com",
+    "documentation": "/Library/Application Support/ComplianceScanner/",
+    "logs": "/Library/Logs/ComplianceScanner/",
+    "reports": "/Users/Shared/ComplianceReports/"
+  }
+}
