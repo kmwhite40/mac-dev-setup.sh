@@ -55,8 +55,8 @@ cat > "$INSTALL_DIR/company-config.sh" << 'EOF'
 # Company-specific configuration
 # Edit these values for your organization
 
-COMPANY_NAME="Your Company"
-IT_SUPPORT_EMAIL="itsupport@company.com"
+COMPANY_NAME="SBS"
+IT_SUPPORT_EMAIL="it@sbsfederal.com"
 UPDATE_INTERVAL_DAYS=4
 SKIP_MACOS_UPDATES=false  # Set to true to skip system updates in corporate environment
 ENABLE_LOGGING=true
