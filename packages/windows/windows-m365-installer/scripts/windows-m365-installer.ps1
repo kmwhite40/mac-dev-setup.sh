@@ -71,6 +71,12 @@ $Script:M365Downloads = @{
         FileName = "CompanyPortal.exe"
         ConfigRequired = $false
     }
+    "Netskope" = @{
+        Name = "Netskope Client"
+        URL = "https://addon-sgn.netskope.com/client/NSClient.exe"
+        FileName = "NSClient.exe"
+        ConfigRequired = $false
+    }
 }
 
 # Create directories
@@ -159,6 +165,27 @@ function Test-M365AppInstalled {
             $portal = Get-AppxPackage -Name "Microsoft.CompanyPortal" -ErrorAction SilentlyContinue
             if ($portal) {
                 return $portal.Version
+            }
+            return $null
+        }
+        "Netskope" {
+            # Check for Netskope Client installation
+            $netskopePaths = @(
+                "$env:ProgramFiles\Netskope\STAgent\stAgentSvc.exe",
+                "${env:ProgramFiles(x86)}\Netskope\STAgent\stAgentSvc.exe"
+            )
+            foreach ($path in $netskopePaths) {
+                if (Test-Path $path) {
+                    return (Get-Item $path).VersionInfo.FileVersion
+                }
+            }
+            # Also check registry
+            $regPath = "HKLM:\SOFTWARE\Netskope\STAgent"
+            if (Test-Path $regPath) {
+                $version = (Get-ItemProperty -Path $regPath -Name Version -ErrorAction SilentlyContinue).Version
+                if ($version) {
+                    return $version
+                }
             }
             return $null
         }
@@ -302,6 +329,18 @@ function Install-M365App {
 
                 if ($process.ExitCode -eq 0) {
                     $installSuccess = $true
+                }
+            }
+            "Netskope" {
+                # Netskope Client installation (silent install)
+                $arguments = "/quiet /norestart"
+                $process = Start-Process -FilePath $filePath -ArgumentList $arguments -Wait -PassThru -NoNewWindow
+
+                if ($process.ExitCode -eq 0 -or $process.ExitCode -eq 3010) {
+                    $installSuccess = $true
+                    if ($process.ExitCode -eq 3010) {
+                        Write-Log "Netskope Client installed - restart required" -Level WARNING
+                    }
                 }
             }
         }

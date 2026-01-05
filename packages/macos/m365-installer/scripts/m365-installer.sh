@@ -466,6 +466,36 @@ install_company_portal() {
     fi
 }
 
+# Netskope Client
+install_netskope_client() {
+    local app_name="Netskope Client"
+    log_info "===== Installing $app_name ====="
+
+    # Check if Netskope is already installed
+    if [ -d "/Applications/Netskope Client.app" ] || [ -d "/Library/Application Support/Netskope" ]; then
+        log_skip "$app_name already installed"
+        return
+    fi
+
+    # Netskope Client download URL (generic installer)
+    # Note: For enterprise deployment, use your tenant-specific URL
+    local url="https://addon-sgn.netskope.com/client/Netskope.pkg"
+    local pkg_file="$DOWNLOAD_DIR/Netskope.pkg"
+
+    log_warning "Netskope Client may require tenant-specific configuration"
+    log_info "Contact IT for your organization's enrollment token"
+
+    if download_file "$url" "$pkg_file" "$app_name"; then
+        if install_pkg "$pkg_file" "$app_name"; then
+            log_success "$app_name installation complete"
+            log_warning "Please configure Netskope with your tenant enrollment token"
+        else
+            log_fail "$app_name installation failed"
+        fi
+        rm -f "$pkg_file"
+    fi
+}
+
 ################################################################################
 # Post-Installation Configuration
 ################################################################################
@@ -482,32 +512,31 @@ configure_office_updates() {
     fi
 }
 
+create_m365_shortcut() {
+    local app_name="$1"
+    local app_path="$2"
+    local desktop_path="$HOME/Desktop"
+    local shortcut_path="$desktop_path/$app_name"
+
+    if [ -d "$app_path" ]; then
+        if [ ! -L "$shortcut_path" ] && [ ! -e "$shortcut_path" ]; then
+            ln -s "$app_path" "$shortcut_path"
+            log_success "Created desktop shortcut for $app_name"
+        fi
+    fi
+}
+
 create_desktop_shortcuts() {
     log_info "Creating desktop shortcuts..."
 
-    local desktop_path="$HOME/Desktop"
-
-    declare -A apps=(
-        ["Microsoft Word"]="/Applications/Microsoft Word.app"
-        ["Microsoft Excel"]="/Applications/Microsoft Excel.app"
-        ["Microsoft PowerPoint"]="/Applications/Microsoft PowerPoint.app"
-        ["Microsoft Outlook"]="/Applications/Microsoft Outlook.app"
-        ["Microsoft Teams"]="/Applications/Microsoft Teams.app"
-        ["Microsoft Edge"]="/Applications/Microsoft Edge.app"
-        ["OneDrive"]="/Applications/OneDrive.app"
-    )
-
-    for app_name in "${!apps[@]}"; do
-        local app_path="${apps[$app_name]}"
-        local shortcut_path="$desktop_path/$app_name"
-
-        if [ -d "$app_path" ]; then
-            if [ ! -L "$shortcut_path" ] && [ ! -e "$shortcut_path" ]; then
-                ln -s "$app_path" "$shortcut_path"
-                log_success "Created desktop shortcut for $app_name"
-            fi
-        fi
-    done
+    create_m365_shortcut "Microsoft Word" "/Applications/Microsoft Word.app"
+    create_m365_shortcut "Microsoft Excel" "/Applications/Microsoft Excel.app"
+    create_m365_shortcut "Microsoft PowerPoint" "/Applications/Microsoft PowerPoint.app"
+    create_m365_shortcut "Microsoft Outlook" "/Applications/Microsoft Outlook.app"
+    create_m365_shortcut "Microsoft Teams" "/Applications/Microsoft Teams.app"
+    create_m365_shortcut "Microsoft Edge" "/Applications/Microsoft Edge.app"
+    create_m365_shortcut "OneDrive" "/Applications/OneDrive.app"
+    create_m365_shortcut "Netskope Client" "/Applications/Netskope Client.app"
 }
 
 show_post_install_instructions() {
@@ -578,6 +607,9 @@ main() {
     log ""
 
     install_company_portal
+    log ""
+
+    install_netskope_client
     log ""
 
     # Check Office Suite components
