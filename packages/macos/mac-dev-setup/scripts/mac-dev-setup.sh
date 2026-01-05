@@ -447,6 +447,24 @@ install_formula() {
 # Desktop Shortcuts
 #===============================================================================
 
+create_desktop_shortcut() {
+    local app_name="$1"
+    local app_path="$2"
+    local desktop_path="$HOME/Desktop"
+    local shortcut_path="$desktop_path/$app_name"
+
+    if [ -d "$app_path" ]; then
+        if [ ! -L "$shortcut_path" ] && [ ! -e "$shortcut_path" ]; then
+            ln -s "$app_path" "$shortcut_path"
+            log_success "Created desktop shortcut for $app_name"
+        else
+            log_success "Desktop shortcut for $app_name already exists"
+        fi
+    else
+        log_warning "$app_name not found at $app_path, skipping shortcut"
+    fi
+}
+
 create_desktop_shortcuts() {
     log_header "Creating Desktop Shortcuts"
 
@@ -458,36 +476,18 @@ create_desktop_shortcuts() {
         return 0
     fi
 
-    # Array of applications to create shortcuts for
-    declare -A apps=(
-        ["Cursor"]="/Applications/Cursor.app"
-        ["Visual Studio Code"]="/Applications/Visual Studio Code.app"
-        ["iTerm"]="/Applications/iTerm.app"
-        ["Docker"]="/Applications/Docker.app"
-        ["Podman Desktop"]="/Applications/Podman Desktop.app"
-        ["Postman"]="/Applications/Postman.app"
-        ["GitHub Desktop"]="/Applications/GitHub Desktop.app"
-        ["IntelliJ IDEA CE"]="/Applications/IntelliJ IDEA CE.app"
-        ["Obsidian"]="/Applications/Obsidian.app"
-        ["DBeaver"]="/Applications/DBeaver.app"
-        ["MongoDB Compass"]="/Applications/MongoDB Compass.app"
-    )
-
-    for app_name in "${!apps[@]}"; do
-        local app_path="${apps[$app_name]}"
-        local shortcut_path="$desktop_path/$app_name"
-
-        if [ -d "$app_path" ]; then
-            if [ ! -L "$shortcut_path" ] && [ ! -e "$shortcut_path" ]; then
-                ln -s "$app_path" "$shortcut_path"
-                log_success "Created desktop shortcut for $app_name"
-            else
-                log_success "Desktop shortcut for $app_name already exists"
-            fi
-        else
-            log_warning "$app_name not found at $app_path, skipping shortcut"
-        fi
-    done
+    # Create shortcuts for each application
+    create_desktop_shortcut "Cursor" "/Applications/Cursor.app"
+    create_desktop_shortcut "Visual Studio Code" "/Applications/Visual Studio Code.app"
+    create_desktop_shortcut "iTerm" "/Applications/iTerm.app"
+    create_desktop_shortcut "Docker" "/Applications/Docker.app"
+    create_desktop_shortcut "Podman Desktop" "/Applications/Podman Desktop.app"
+    create_desktop_shortcut "Postman" "/Applications/Postman.app"
+    create_desktop_shortcut "GitHub Desktop" "/Applications/GitHub Desktop.app"
+    create_desktop_shortcut "IntelliJ IDEA CE" "/Applications/IntelliJ IDEA CE.app"
+    create_desktop_shortcut "Obsidian" "/Applications/Obsidian.app"
+    create_desktop_shortcut "DBeaver" "/Applications/DBeaver.app"
+    create_desktop_shortcut "MongoDB Compass" "/Applications/MongoDB Compass.app"
 }
 
 #===============================================================================
