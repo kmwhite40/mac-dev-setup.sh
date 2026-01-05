@@ -26,12 +26,15 @@
 #Requires -RunAsAdministrator
 
 # Script configuration
-$Script:Version = "1.0.0"
+$Script:Version = "1.1.0"
 $Script:CompanyName = "SBS Federal"
 $Script:ITSupportEmail = "it@sbsfederal.com"
 $Script:LogDir = "$env:USERPROFILE\.m365-installer"
 $Script:LogFile = "$Script:LogDir\installer.log"
 $Script:DownloadDir = "$Script:LogDir\downloads"
+$Script:MinWindowsBuild = 17763  # Windows 10 1809 or later
+$Script:MinDiskSpaceGB = 15      # Minimum disk space required
+$Script:RequiredDotNetVersion = "4.7.2"
 
 # Statistics
 $Script:TotalApps = 0
@@ -116,6 +119,378 @@ function Write-Header {
     Write-Log $separator -Level INFO
     Write-Log $Text -Level INFO
     Write-Log $separator -Level INFO
+}
+
+#===============================================================================
+# Prerequisite Check Functions
+#===============================================================================
+
+# Check Windows version
+function Test-WindowsVersion {
+    Write-Log "Checking Windows version..." -Level INFO
+
+    $osInfo = Get-CimInstance -ClassName Win32_OperatingSystem
+    $buildNumber = [int]$osInfo.BuildNumber
+    $osCaption = $osInfo.Caption
+
+    Write-Log "Operating System: $osCaption" -Level INFO
+    Write-Log "Build Number: $buildNumber" -Level INFO
+
+    if ($buildNumber -lt $Script:MinWindowsBuild) {
+        Write-Log "Windows build $buildNumber is not supported" -Level ERROR
+        Write-Log "Minimum required: Windows 10 Build $Script:MinWindowsBuild (version 1809) or later" -Level ERROR
+        return $false
+    }
+
+    Write-Log "Windows version check passed" -Level SUCCESS
+    return $true
+}
+
+# Check and configure TLS 1.2
+function Set-TLS12 {
+    Write-Log "Configuring TLS 1.2 for secure downloads..." -Level INFO
+
+    try {
+        # Enable TLS 1.2 for .NET
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+        # Verify TLS 1.2 is enabled in registry (for future sessions)
+        $tlsRegPath = "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client"
+        if (-not (Test-Path $tlsRegPath)) {
+            New-Item -Path $tlsRegPath -Force | Out-Null
+        }
+        Set-ItemProperty -Path $tlsRegPath -Name "Enabled" -Value 1 -Type DWord -ErrorAction SilentlyContinue
+        Set-ItemProperty -Path $tlsRegPath -Name "DisabledByDefault" -Value 0 -Type DWord -ErrorAction SilentlyContinue
+
+        Write-Log "TLS 1.2 configured successfully" -Level SUCCESS
+        return $true
+    } catch {
+        Write-Log "Warning: Could not configure TLS 1.2: $_" -Level WARNING
+        return $true  # Continue anyway
+    }
+}
+
+# Check .NET Framework version
+function Test-DotNetFramework {
+    Write-Log "Checking .NET Framework..." -Level INFO
+
+    try {
+        $netRegPath = "HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full"
+
+        if (Test-Path $netRegPath) {
+            $release = (Get-ItemProperty -Path $netRegPath -Name Release -ErrorAction SilentlyContinue).Release
+
+            # .NET Framework version mapping
+            $version = switch ($release) {
+                { $_ -ge 533320 } { "4.8.1" }
+                { $_ -ge 528040 } { "4.8" }
+                { $_ -ge 461808 } { "4.7.2" }
+                { $_ -ge 461308 } { "4.7.1" }
+                { $_ -ge 460798 } { "4.7" }
+                { $_ -ge 394802 } { "4.6.2" }
+                { $_ -ge 394254 } { "4.6.1" }
+                { $_ -ge 393295 } { "4.6" }
+                default { "Unknown ($release)" }
+            }
+
+            Write-Log ".NET Framework version: $version" -Level INFO
+
+            if ($release -ge 461808) {  # 4.7.2 or later
+                Write-Log ".NET Framework check passed" -Level SUCCESS
+                return $true
+            }
+        }
+
+        Write-Log ".NET Framework 4.7.2 or later is required but not found" -Level WARNING
+        return $false
+    } catch {
+        Write-Log "Could not determine .NET Framework version: $_" -Level WARNING
+        return $false
+    }
+}
+
+# Install .NET Framework if missing
+function Install-DotNetFramework {
+    Write-Log "Installing .NET Framework 4.8..." -Level INFO
+
+    $dotNetUrl = "https://go.microsoft.com/fwlink/?linkid=2088631"  # .NET 4.8 offline installer
+    $dotNetPath = Join-Path $Script:DownloadDir "ndp48-x86-x64-allos-enu.exe"
+
+    try {
+        # Download .NET Framework
+        if (-not (Test-Path $dotNetPath)) {
+            $downloadSuccess = Get-M365File -URL $dotNetUrl -FilePath $dotNetPath -AppName ".NET Framework 4.8"
+            if (-not $downloadSuccess) {
+                Write-Log "Failed to download .NET Framework installer" -Level ERROR
+                return $false
+            }
+        }
+
+        # Install silently
+        Write-Log "Installing .NET Framework 4.8 (this may take several minutes)..." -Level INFO
+        $process = Start-Process -FilePath $dotNetPath -ArgumentList "/q /norestart" -Wait -PassThru -NoNewWindow
+
+        if ($process.ExitCode -eq 0 -or $process.ExitCode -eq 3010) {
+            Write-Log ".NET Framework 4.8 installed successfully" -Level SUCCESS
+            if ($process.ExitCode -eq 3010) {
+                Write-Log "A restart is required to complete .NET Framework installation" -Level WARNING
+            }
+            return $true
+        } else {
+            Write-Log ".NET Framework installation failed (exit code: $($process.ExitCode))" -Level ERROR
+            return $false
+        }
+    } catch {
+        Write-Log "Error installing .NET Framework: $_" -Level ERROR
+        return $false
+    }
+}
+
+# Check Visual C++ Redistributables
+function Test-VCRedist {
+    Write-Log "Checking Visual C++ Redistributables..." -Level INFO
+
+    $vcInstalled = $false
+
+    # Check for VC++ 2015-2022 x64
+    $vcRegPaths = @(
+        "HKLM:\SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\X64",
+        "HKLM:\SOFTWARE\WOW6432Node\Microsoft\VisualStudio\14.0\VC\Runtimes\X64"
+    )
+
+    foreach ($path in $vcRegPaths) {
+        if (Test-Path $path) {
+            $version = (Get-ItemProperty -Path $path -Name Version -ErrorAction SilentlyContinue).Version
+            if ($version) {
+                Write-Log "Visual C++ Redistributable found: $version" -Level INFO
+                $vcInstalled = $true
+                break
+            }
+        }
+    }
+
+    # Also check installed programs
+    if (-not $vcInstalled) {
+        $vcPrograms = Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*" -ErrorAction SilentlyContinue |
+            Where-Object { $_.DisplayName -like "*Visual C++*2015*" -or $_.DisplayName -like "*Visual C++*2019*" -or $_.DisplayName -like "*Visual C++*2022*" }
+
+        if ($vcPrograms) {
+            Write-Log "Visual C++ Redistributable found: $($vcPrograms[0].DisplayName)" -Level INFO
+            $vcInstalled = $true
+        }
+    }
+
+    if ($vcInstalled) {
+        Write-Log "Visual C++ Redistributable check passed" -Level SUCCESS
+        return $true
+    }
+
+    Write-Log "Visual C++ Redistributable not found" -Level WARNING
+    return $false
+}
+
+# Install Visual C++ Redistributables
+function Install-VCRedist {
+    Write-Log "Installing Visual C++ Redistributable 2015-2022..." -Level INFO
+
+    $vcUrl = "https://aka.ms/vs/17/release/vc_redist.x64.exe"
+    $vcPath = Join-Path $Script:DownloadDir "vc_redist.x64.exe"
+
+    try {
+        # Download VC++ Redist
+        if (-not (Test-Path $vcPath)) {
+            $downloadSuccess = Get-M365File -URL $vcUrl -FilePath $vcPath -AppName "Visual C++ Redistributable"
+            if (-not $downloadSuccess) {
+                Write-Log "Failed to download Visual C++ Redistributable" -Level ERROR
+                return $false
+            }
+        }
+
+        # Install silently
+        Write-Log "Installing Visual C++ Redistributable..." -Level INFO
+        $process = Start-Process -FilePath $vcPath -ArgumentList "/quiet /norestart" -Wait -PassThru -NoNewWindow
+
+        if ($process.ExitCode -eq 0 -or $process.ExitCode -eq 3010) {
+            Write-Log "Visual C++ Redistributable installed successfully" -Level SUCCESS
+            return $true
+        } else {
+            Write-Log "Visual C++ Redistributable installation failed (exit code: $($process.ExitCode))" -Level ERROR
+            return $false
+        }
+    } catch {
+        Write-Log "Error installing Visual C++ Redistributable: $_" -Level ERROR
+        return $false
+    }
+}
+
+# Check WebView2 Runtime (required for new Teams)
+function Test-WebView2 {
+    Write-Log "Checking Microsoft Edge WebView2 Runtime..." -Level INFO
+
+    $webView2Paths = @(
+        "HKLM:\SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}",
+        "HKLM:\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}",
+        "HKCU:\SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"
+    )
+
+    foreach ($path in $webView2Paths) {
+        if (Test-Path $path) {
+            $version = (Get-ItemProperty -Path $path -Name pv -ErrorAction SilentlyContinue).pv
+            if ($version) {
+                Write-Log "WebView2 Runtime found: $version" -Level INFO
+                Write-Log "WebView2 check passed" -Level SUCCESS
+                return $true
+            }
+        }
+    }
+
+    Write-Log "WebView2 Runtime not found" -Level WARNING
+    return $false
+}
+
+# Install WebView2 Runtime
+function Install-WebView2 {
+    Write-Log "Installing Microsoft Edge WebView2 Runtime..." -Level INFO
+
+    $webView2Url = "https://go.microsoft.com/fwlink/p/?LinkId=2124703"  # Evergreen bootstrapper
+    $webView2Path = Join-Path $Script:DownloadDir "MicrosoftEdgeWebview2Setup.exe"
+
+    try {
+        # Download WebView2
+        if (-not (Test-Path $webView2Path)) {
+            $downloadSuccess = Get-M365File -URL $webView2Url -FilePath $webView2Path -AppName "WebView2 Runtime"
+            if (-not $downloadSuccess) {
+                Write-Log "Failed to download WebView2 Runtime" -Level ERROR
+                return $false
+            }
+        }
+
+        # Install silently
+        Write-Log "Installing WebView2 Runtime..." -Level INFO
+        $process = Start-Process -FilePath $webView2Path -ArgumentList "/silent /install" -Wait -PassThru -NoNewWindow
+
+        if ($process.ExitCode -eq 0) {
+            Write-Log "WebView2 Runtime installed successfully" -Level SUCCESS
+            return $true
+        } else {
+            Write-Log "WebView2 Runtime installation failed (exit code: $($process.ExitCode))" -Level ERROR
+            return $false
+        }
+    } catch {
+        Write-Log "Error installing WebView2 Runtime: $_" -Level ERROR
+        return $false
+    }
+}
+
+# Check Windows Update service
+function Test-WindowsUpdateService {
+    Write-Log "Checking Windows Update service..." -Level INFO
+
+    try {
+        $wuService = Get-Service -Name wuauserv -ErrorAction SilentlyContinue
+
+        if ($wuService) {
+            Write-Log "Windows Update service status: $($wuService.Status)" -Level INFO
+
+            if ($wuService.Status -ne 'Running') {
+                Write-Log "Starting Windows Update service..." -Level INFO
+                Start-Service -Name wuauserv -ErrorAction SilentlyContinue
+                Start-Sleep -Seconds 2
+            }
+
+            Write-Log "Windows Update service check passed" -Level SUCCESS
+            return $true
+        }
+
+        Write-Log "Windows Update service not found" -Level WARNING
+        return $false
+    } catch {
+        Write-Log "Could not check Windows Update service: $_" -Level WARNING
+        return $true  # Continue anyway
+    }
+}
+
+# Check BITS service (required for downloads)
+function Test-BITSService {
+    Write-Log "Checking Background Intelligent Transfer Service (BITS)..." -Level INFO
+
+    try {
+        $bitsService = Get-Service -Name BITS -ErrorAction SilentlyContinue
+
+        if ($bitsService) {
+            Write-Log "BITS service status: $($bitsService.Status)" -Level INFO
+
+            if ($bitsService.Status -ne 'Running') {
+                Write-Log "Starting BITS service..." -Level INFO
+                Start-Service -Name BITS -ErrorAction SilentlyContinue
+                Start-Sleep -Seconds 2
+            }
+
+            Write-Log "BITS service check passed" -Level SUCCESS
+            return $true
+        }
+
+        Write-Log "BITS service not found - downloads may fail" -Level WARNING
+        return $false
+    } catch {
+        Write-Log "Could not check BITS service: $_" -Level WARNING
+        return $true  # Continue anyway
+    }
+}
+
+# Main prerequisite check function
+function Test-AllPrerequisites {
+    Write-Header "Checking Prerequisites"
+
+    $allPassed = $true
+    $restartRequired = $false
+
+    # 1. Windows version check (critical)
+    if (-not (Test-WindowsVersion)) {
+        Write-Log "Windows version requirement not met. Installation cannot continue." -Level ERROR
+        return @{ Success = $false; RestartRequired = $false }
+    }
+
+    # 2. Configure TLS 1.2
+    Set-TLS12
+
+    # 3. Check BITS service
+    Test-BITSService
+
+    # 4. Check Windows Update service
+    Test-WindowsUpdateService
+
+    # 5. Check .NET Framework
+    if (-not (Test-DotNetFramework)) {
+        Write-Log "Installing required .NET Framework..." -Level INFO
+        if (Install-DotNetFramework) {
+            $restartRequired = $true
+        } else {
+            Write-Log ".NET Framework installation failed - some features may not work" -Level WARNING
+        }
+    }
+
+    # 6. Check Visual C++ Redistributable
+    if (-not (Test-VCRedist)) {
+        Write-Log "Installing required Visual C++ Redistributable..." -Level INFO
+        Install-VCRedist
+    }
+
+    # 7. Check WebView2 Runtime (required for new Teams)
+    if (-not (Test-WebView2)) {
+        Write-Log "Installing required WebView2 Runtime..." -Level INFO
+        Install-WebView2
+    }
+
+    Write-Log "" -Level INFO
+    Write-Log "Prerequisite check complete" -Level SUCCESS
+
+    if ($restartRequired) {
+        Write-Log "IMPORTANT: A restart is required before continuing" -Level WARNING
+        Write-Log "Please restart your computer and run this installer again" -Level WARNING
+    }
+
+    return @{ Success = $allPassed; RestartRequired = $restartRequired }
 }
 
 # Check if application is installed
@@ -423,14 +798,14 @@ function Start-M365Installation {
         exit 1
     }
 
-    # Check disk space (require 10GB)
+    # Check disk space
     $drive = (Get-Item $env:SystemDrive).PSDrive
     $freeSpaceGB = [math]::Round($drive.Free / 1GB, 2)
 
     Write-Log "Available disk space: $freeSpaceGB GB" -Level INFO
 
-    if ($freeSpaceGB -lt 10) {
-        Write-Log "Insufficient disk space. At least 10 GB required." -Level ERROR
+    if ($freeSpaceGB -lt $Script:MinDiskSpaceGB) {
+        Write-Log "Insufficient disk space. At least $Script:MinDiskSpaceGB GB required." -Level ERROR
         Write-Log "Please free up disk space and try again." -Level ERROR
         exit 1
     }
@@ -452,6 +827,25 @@ function Start-M365Installation {
         Write-Log "Failed to check connectivity: $_" -Level WARNING
         Write-Log "Proceeding anyway..." -Level WARNING
     }
+
+    # Check and install prerequisites
+    $prereqResult = Test-AllPrerequisites
+
+    if (-not $prereqResult.Success) {
+        Write-Log "Prerequisite check failed. Please resolve the issues and try again." -Level ERROR
+        exit 1
+    }
+
+    if ($prereqResult.RestartRequired) {
+        Write-Log "" -Level INFO
+        Write-Log "A system restart is required to complete prerequisite installation." -Level WARNING
+        Write-Log "Please restart your computer and run this installer again." -Level WARNING
+        Write-Header "Restart Required - Press any key to exit"
+        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+        exit 0
+    }
+
+    Write-Log "" -Level INFO
 
     # Install applications
     foreach ($app in $Script:M365Downloads.GetEnumerator()) {
