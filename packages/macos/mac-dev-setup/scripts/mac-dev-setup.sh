@@ -154,6 +154,7 @@ create_desktop_shortcuts() {
         ["Visual Studio Code"]="/Applications/Visual Studio Code.app"
         ["iTerm"]="/Applications/iTerm.app"
         ["Docker"]="/Applications/Docker.app"
+        ["Podman Desktop"]="/Applications/Podman Desktop.app"
         ["Postman"]="/Applications/Postman.app"
         ["GitHub Desktop"]="/Applications/GitHub Desktop.app"
         ["IntelliJ IDEA CE"]="/Applications/IntelliJ IDEA CE.app"
@@ -222,7 +223,7 @@ fi
 # --- GUI Applications ---
 log "Installing GUI Applications..."
 install_cask "docker"
-install_cask "podman"
+install_cask "podman-desktop"
 install_cask "iterm2"
 install_cask "visual-studio-code"
 install_cask "cursor"             # Cursor AI Code Editor
@@ -234,7 +235,8 @@ install_cask "tableplus"
 install_cask "dbeaver-community"
 install_cask "mongodb-compass"
 install_cask "github"             # GitHub Desktop
-install_cask "gitlab"             # GitLab Desktop (if available)
+# Note: GitLab doesn't have an official desktop app cask
+# Use glab CLI (installed below) for GitLab operations
 
 # --- CLI Tools ---
 log "Installing CLI Tools..."
