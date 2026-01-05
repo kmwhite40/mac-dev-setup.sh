@@ -26,7 +26,7 @@
 #Requires -RunAsAdministrator
 
 # Script configuration
-$Script:Version = "1.1.0"
+$Script:Version = "1.2.0"
 $Script:CompanyName = "SBS Federal"
 $Script:ITSupportEmail = "it@sbsfederal.com"
 $Script:LogDir = "$env:USERPROFILE\.m365-installer"
@@ -438,6 +438,162 @@ function Test-BITSService {
     }
 }
 
+# Check Windows Subsystem for Linux (WSL)
+function Test-WSL {
+    Write-Log "Checking Windows Subsystem for Linux (WSL)..." -Level INFO
+
+    try {
+        # Check if WSL feature is enabled
+        $wslFeature = Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux -ErrorAction SilentlyContinue
+
+        if ($wslFeature -and $wslFeature.State -eq 'Enabled') {
+            Write-Log "WSL feature is enabled" -Level INFO
+
+            # Check if WSL 2 is available by running wsl --version
+            $null = wsl --version 2>$null
+            if ($LASTEXITCODE -eq 0) {
+                Write-Log "WSL 2 is installed and available" -Level SUCCESS
+                return @{ Installed = $true; WSL2 = $true }
+            } else {
+                Write-Log "WSL 1 is installed (WSL 2 may need update)" -Level INFO
+                return @{ Installed = $true; WSL2 = $false }
+            }
+        }
+
+        # Check via wsl command
+        $null = wsl --status 2>$null
+        if ($LASTEXITCODE -eq 0) {
+            Write-Log "WSL is installed" -Level SUCCESS
+            return @{ Installed = $true; WSL2 = $true }
+        }
+
+        Write-Log "WSL is not installed" -Level WARNING
+        return @{ Installed = $false; WSL2 = $false }
+    } catch {
+        Write-Log "Could not check WSL status: $_" -Level WARNING
+        return @{ Installed = $false; WSL2 = $false }
+    }
+}
+
+# Install Windows Subsystem for Linux
+function Install-WSL {
+    Write-Log "Installing Windows Subsystem for Linux (WSL)..." -Level INFO
+
+    try {
+        # Check Windows build for WSL 2 support (Build 19041+)
+        $osInfo = Get-CimInstance -ClassName Win32_OperatingSystem
+        $buildNumber = [int]$osInfo.BuildNumber
+
+        if ($buildNumber -ge 19041) {
+            # Use simplified wsl --install command (Windows 10 2004+)
+            Write-Log "Installing WSL with default Ubuntu distribution..." -Level INFO
+            Write-Log "This may take several minutes..." -Level INFO
+
+            $process = Start-Process -FilePath "wsl.exe" -ArgumentList "--install --no-launch" -Wait -PassThru -NoNewWindow
+
+            if ($process.ExitCode -eq 0) {
+                Write-Log "WSL installed successfully" -Level SUCCESS
+                Write-Log "A restart is required to complete WSL installation" -Level WARNING
+                return @{ Success = $true; RestartRequired = $true }
+            } elseif ($process.ExitCode -eq 1) {
+                # Exit code 1 often means already installed or restart needed
+                Write-Log "WSL installation completed (restart may be required)" -Level SUCCESS
+                return @{ Success = $true; RestartRequired = $true }
+            } else {
+                Write-Log "WSL installation returned exit code: $($process.ExitCode)" -Level WARNING
+                # Try alternative method
+                return Install-WSLFeatures
+            }
+        } else {
+            # Older Windows - use DISM method
+            return Install-WSLFeatures
+        }
+    } catch {
+        Write-Log "Error installing WSL: $_" -Level ERROR
+        return @{ Success = $false; RestartRequired = $false }
+    }
+}
+
+# Install WSL features using DISM (fallback method)
+function Install-WSLFeatures {
+    Write-Log "Installing WSL using Windows Features..." -Level INFO
+
+    try {
+        # Enable WSL feature
+        Write-Log "Enabling Windows Subsystem for Linux feature..." -Level INFO
+        $wslResult = Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux -NoRestart -ErrorAction Stop
+
+        # Enable Virtual Machine Platform (required for WSL 2)
+        Write-Log "Enabling Virtual Machine Platform..." -Level INFO
+        $vmResult = Enable-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform -NoRestart -ErrorAction SilentlyContinue
+
+        $restartNeeded = ($wslResult.RestartNeeded -or ($vmResult -and $vmResult.RestartNeeded))
+
+        if ($restartNeeded) {
+            Write-Log "WSL features enabled - restart required" -Level SUCCESS
+            return @{ Success = $true; RestartRequired = $true }
+        } else {
+            Write-Log "WSL features enabled successfully" -Level SUCCESS
+
+            # Try to set WSL 2 as default
+            try {
+                wsl --set-default-version 2 2>$null
+                Write-Log "WSL 2 set as default version" -Level SUCCESS
+            } catch {
+                Write-Log "WSL 2 could not be set as default (may need restart)" -Level WARNING
+            }
+
+            return @{ Success = $true; RestartRequired = $false }
+        }
+    } catch {
+        Write-Log "Error enabling WSL features: $_" -Level ERROR
+        return @{ Success = $false; RestartRequired = $false }
+    }
+}
+
+# Update WSL kernel (for WSL 2)
+function Update-WSLKernel {
+    Write-Log "Updating WSL kernel..." -Level INFO
+
+    $wslUpdateUrl = "https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi"
+    $wslUpdatePath = Join-Path $Script:DownloadDir "wsl_update_x64.msi"
+
+    try {
+        # Download WSL kernel update
+        if (-not (Test-Path $wslUpdatePath)) {
+            $downloadSuccess = Get-M365File -URL $wslUpdateUrl -FilePath $wslUpdatePath -AppName "WSL Kernel Update"
+            if (-not $downloadSuccess) {
+                Write-Log "Failed to download WSL kernel update" -Level WARNING
+                return $false
+            }
+        }
+
+        # Install WSL kernel update
+        Write-Log "Installing WSL kernel update..." -Level INFO
+        $process = Start-Process -FilePath "msiexec.exe" -ArgumentList "/i `"$wslUpdatePath`" /quiet /norestart" -Wait -PassThru -NoNewWindow
+
+        if ($process.ExitCode -eq 0) {
+            Write-Log "WSL kernel updated successfully" -Level SUCCESS
+
+            # Set WSL 2 as default
+            try {
+                wsl --set-default-version 2 2>$null
+                Write-Log "WSL 2 set as default version" -Level SUCCESS
+            } catch {
+                Write-Log "Could not set WSL 2 as default" -Level WARNING
+            }
+
+            return $true
+        } else {
+            Write-Log "WSL kernel update failed (exit code: $($process.ExitCode))" -Level WARNING
+            return $false
+        }
+    } catch {
+        Write-Log "Error updating WSL kernel: $_" -Level WARNING
+        return $false
+    }
+}
+
 # Main prerequisite check function
 function Test-AllPrerequisites {
     Write-Header "Checking Prerequisites"
@@ -480,6 +636,24 @@ function Test-AllPrerequisites {
     if (-not (Test-WebView2)) {
         Write-Log "Installing required WebView2 Runtime..." -Level INFO
         Install-WebView2
+    }
+
+    # 8. Check Windows Subsystem for Linux (WSL)
+    $wslStatus = Test-WSL
+    if (-not $wslStatus.Installed) {
+        Write-Log "Installing Windows Subsystem for Linux..." -Level INFO
+        $wslResult = Install-WSL
+        if ($wslResult.Success) {
+            if ($wslResult.RestartRequired) {
+                $restartRequired = $true
+            }
+        } else {
+            Write-Log "WSL installation failed - some features may not work" -Level WARNING
+        }
+    } elseif (-not $wslStatus.WSL2) {
+        # WSL 1 is installed but WSL 2 is not - try to update
+        Write-Log "Upgrading to WSL 2..." -Level INFO
+        Update-WSLKernel
     }
 
     Write-Log "" -Level INFO
