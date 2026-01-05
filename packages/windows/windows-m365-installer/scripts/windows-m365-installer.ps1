@@ -30,8 +30,8 @@ $Script:Version = "1.0.0"
 $Script:CompanyName = "SBS Federal"
 $Script:ITSupportEmail = "it@sbsfederal.com"
 $Script:LogDir = "$env:USERPROFILE\.m365-installer"
-$Script:LogFile = "$LogDir\installer.log"
-$Script:DownloadDir = "$LogDir\downloads"
+$Script:LogFile = "$Script:LogDir\installer.log"
+$Script:DownloadDir = "$Script:LogDir\downloads"
 
 # Statistics
 $Script:TotalApps = 0
@@ -74,12 +74,12 @@ $Script:M365Downloads = @{
 }
 
 # Create directories
-if (-not (Test-Path $LogDir)) {
-    New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
+if (-not (Test-Path $Script:LogDir)) {
+    New-Item -ItemType Directory -Path $Script:LogDir -Force | Out-Null
 }
 
-if (-not (Test-Path $DownloadDir)) {
-    New-Item -ItemType Directory -Path $DownloadDir -Force | Out-Null
+if (-not (Test-Path $Script:DownloadDir)) {
+    New-Item -ItemType Directory -Path $Script:DownloadDir -Force | Out-Null
 }
 
 # Logging functions
@@ -100,7 +100,7 @@ function Write-Log {
         'ERROR'   { Write-Host "❌ $Message" -ForegroundColor Red }
     }
 
-    Add-Content -Path $LogFile -Value $logMessage
+    Add-Content -Path $Script:LogFile -Value $logMessage
 }
 
 function Write-Header {
@@ -217,7 +217,7 @@ function Install-M365App {
     }
 
     # Download file
-    $filePath = Join-Path $DownloadDir $AppInfo.FileName
+    $filePath = Join-Path $Script:DownloadDir $AppInfo.FileName
 
     if (-not (Test-Path $filePath)) {
         $downloadSuccess = Get-M365File -URL $AppInfo.URL -FilePath $filePath -AppName $AppInfo.Name
@@ -254,14 +254,14 @@ function Install-M365App {
   <Property Name="PinIconsToTaskbar" Value="TRUE" />
 </Configuration>
 "@
-                $configPath = Join-Path $DownloadDir "office365-config.xml"
+                $configPath = Join-Path $Script:DownloadDir "office365-config.xml"
                 $configXML | Out-File -FilePath $configPath -Encoding UTF8
 
                 # Run Office Deployment Tool
-                $process = Start-Process -FilePath $filePath -ArgumentList "/quiet /extract:$DownloadDir" -Wait -PassThru -NoNewWindow
+                $process = Start-Process -FilePath $filePath -ArgumentList "/quiet /extract:$($Script:DownloadDir)" -Wait -PassThru -NoNewWindow
                 Start-Sleep -Seconds 5
 
-                $setupPath = Join-Path $DownloadDir "setup.exe"
+                $setupPath = Join-Path $Script:DownloadDir "setup.exe"
                 if (Test-Path $setupPath) {
                     Write-Log "Running Office 365 installation (this may take 15-30 minutes)..." -Level INFO
                     $process = Start-Process -FilePath $setupPath -ArgumentList "/configure `"$configPath`"" -Wait -PassThru -NoNewWindow
@@ -357,8 +357,8 @@ function Clear-Downloads {
     Write-Header "Cleaning Up"
 
     try {
-        if (Test-Path $DownloadDir) {
-            Remove-Item -Path $DownloadDir -Recurse -Force
+        if (Test-Path $Script:DownloadDir) {
+            Remove-Item -Path $Script:DownloadDir -Recurse -Force
             Write-Log "Temporary files cleaned up" -Level SUCCESS
         }
     } catch {
@@ -368,9 +368,9 @@ function Clear-Downloads {
 
 # Main installation function
 function Start-M365Installation {
-    Write-Header "Microsoft 365 Applications Installer - v$Version"
-    Write-Log "Company: $CompanyName" -Level INFO
-    Write-Log "Support: $ITSupportEmail" -Level INFO
+    Write-Header "Microsoft 365 Applications Installer - v$($Script:Version)"
+    Write-Log "Company: $($Script:CompanyName)" -Level INFO
+    Write-Log "Support: $($Script:ITSupportEmail)" -Level INFO
     Write-Log "" -Level INFO
 
     # Check administrator privileges
@@ -434,7 +434,7 @@ function Start-M365Installation {
     Write-Log "  Already Installed/Skipped: $Script:SkippedCount" -Level WARNING
     Write-Log "  Failed: $Script:FailedCount" -Level ERROR
     Write-Log "" -Level INFO
-    Write-Log "Log file: $LogFile" -Level INFO
+    Write-Log "Log file: $($Script:LogFile)" -Level INFO
     Write-Log "" -Level INFO
     Write-Log "Next Steps:" -Level INFO
     Write-Log "1. Sign in to Microsoft 365 applications:" -Level INFO
@@ -462,7 +462,7 @@ function Start-M365Installation {
     Write-Log "   - Sign in with SBS Federal credentials" -Level INFO
     Write-Log "   - Complete device enrollment" -Level INFO
     Write-Log "" -Level INFO
-    Write-Log "For support, contact: $ITSupportEmail" -Level INFO
+    Write-Log "For support, contact: $($Script:ITSupportEmail)" -Level INFO
     Write-Header "Setup Complete - Press any key to exit"
 
     $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
@@ -473,6 +473,6 @@ try {
     Start-M365Installation
 } catch {
     Write-Log "Unexpected error: $_" -Level ERROR
-    Write-Log "Please contact $ITSupportEmail for support" -Level ERROR
+    Write-Log "Please contact $($Script:ITSupportEmail) for support" -Level ERROR
     exit 1
 }
