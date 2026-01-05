@@ -1,0 +1,105 @@
+{
+  "name": "SBS Federal M365 Installer",
+  "version": "1.2.0",
+  "description": "Automated Microsoft 365 application installer with prerequisites for Windows endpoints",
+  "company": "SBS Federal",
+  "author": "IT Department",
+  "contact": "it@sbsfederal.com",
+  "platform": "Windows",
+  "minimumOS": "Windows 10 Build 17763 (version 1809)",
+  "architecture": "x64",
+  "category": "Productivity",
+  "intune": {
+    "appType": "Win32",
+    "packageFormat": ".intunewin",
+    "installBehavior": "system",
+    "deviceRestartBehavior": "basedOnReturnCode",
+    "returnCodes": [
+      { "code": 0, "type": "success" },
+      { "code": 3010, "type": "softReboot" },
+      { "code": 1641, "type": "hardReboot" },
+      { "code": 1618, "type": "retry" }
+    ],
+    "installCommand": "powershell.exe -ExecutionPolicy Bypass -File install.ps1",
+    "uninstallCommand": "powershell.exe -ExecutionPolicy Bypass -File uninstall.ps1",
+    "detectionRules": {
+      "type": "script",
+      "scriptFile": "detection.ps1",
+      "runAs32Bit": false,
+      "enforceSignatureCheck": false
+    },
+    "requirements": {
+      "minimumDiskSpaceGB": 15,
+      "minimumMemoryMB": 4096,
+      "minimumCPUSpeed": 1000,
+      "operatingSystemArchitecture": "x64"
+    }
+  },
+  "applications": [
+    {
+      "name": "Microsoft Office 365",
+      "includes": ["Word", "Excel", "PowerPoint", "Outlook", "OneNote"]
+    },
+    { "name": "Microsoft Teams" },
+    { "name": "Microsoft OneDrive" },
+    { "name": "Microsoft Edge" },
+    { "name": "Company Portal" },
+    { "name": "Netskope Client" }
+  ],
+  "prerequisites": [
+    { "name": ".NET Framework 4.7.2+", "autoInstall": true },
+    { "name": "Visual C++ 2015-2022", "autoInstall": true },
+    { "name": "WebView2 Runtime", "autoInstall": true },
+    { "name": "Windows Subsystem for Linux", "autoInstall": true },
+    { "name": "TLS 1.2", "autoInstall": true }
+  ],
+  "features": [
+    "Automatic prerequisite installation",
+    "Smart detection of existing installations",
+    "Silent installation support",
+    "Desktop shortcuts creation",
+    "Comprehensive logging",
+    "Intune-ready deployment",
+    "WSL 2 support"
+  ],
+  "estimatedInstallTime": "30-60 minutes",
+  "diskSpaceRequired": "15 GB",
+  "logs": {
+    "location": "%USERPROFILE%\\.m365-installer\\installer.log",
+    "intuneLocation": "%ProgramData%\\SBSFederal\\M365Installer\\Logs"
+  },
+  "registry": {
+    "detectionKey": "HKLM:\\SOFTWARE\\SBSFederal\\M365Installer",
+    "versionValue": "Version"
+  },
+  "lastUpdated": "2025-01-05",
+  "changelog": [
+    {
+      "version": "1.2.0",
+      "date": "2025-01-05",
+      "changes": [
+        "Added WSL prerequisite check and installation",
+        "WSL 2 automatic upgrade support"
+      ]
+    },
+    {
+      "version": "1.1.0",
+      "date": "2025-01-05",
+      "changes": [
+        "Added comprehensive prerequisite checks",
+        ".NET Framework 4.8 auto-installation",
+        "Visual C++ Redistributable auto-installation",
+        "WebView2 Runtime auto-installation",
+        "TLS 1.2 configuration"
+      ]
+    },
+    {
+      "version": "1.0.0",
+      "date": "2025-01-01",
+      "changes": [
+        "Initial release",
+        "Office 365, Teams, OneDrive, Edge, Company Portal installation"
+      ]
+    }
+  ]
+}
