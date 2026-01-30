@@ -1,1 +1,12 @@
-packages/windows/windows-m365-installer/.DS_Store
+# macOS
+.DS_Store
+*.DS_Store
+
+# Package build artifacts
+*.pkg
+*.intunemac
+build/
+
+# Temporary files
+*.tmp
+*.log

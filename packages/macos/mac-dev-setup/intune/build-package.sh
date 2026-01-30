@@ -9,8 +9,8 @@ set -e
 
 # Configuration
 PACKAGE_NAME="MacDevSetup"
-VERSION="2.0.0"
-IDENTIFIER="com.company.macdevsetup"
+VERSION="2.1.0"
+IDENTIFIER="com.sbsfederal.macdevsetup"
 INSTALL_LOCATION="/tmp/macdevsetup"
 
 # Color codes
@@ -41,20 +41,27 @@ mkdir -p build/scripts
 
 # Copy main script and documentation
 echo "Copying files to package..."
-if [ -f "../mac-dev-setup.sh" ]; then
+if [ -f "../scripts/mac-dev-setup.sh" ]; then
+    cp ../scripts/mac-dev-setup.sh build/payload/
+    echo "  ✓ Copied mac-dev-setup.sh"
+elif [ -f "../mac-dev-setup.sh" ]; then
     cp ../mac-dev-setup.sh build/payload/
+    echo "  ✓ Copied mac-dev-setup.sh"
 else
-    echo -e "${RED}Error: mac-dev-setup.sh not found in parent directory${NC}"
+    echo -e "${RED}Error: mac-dev-setup.sh not found${NC}"
     exit 1
 fi
 
-# Copy documentation files
+# Copy documentation files from docs folder or parent
 for doc in README.md QUICK_START.md OPERATIONS.md TROUBLESHOOTING.md INDEX.md PROJECT_STRUCTURE.md; do
-    if [ -f "../$doc" ]; then
+    if [ -f "../docs/$doc" ]; then
+        cp "../docs/$doc" build/payload/
+        echo "  ✓ Copied $doc"
+    elif [ -f "../$doc" ]; then
         cp "../$doc" build/payload/
         echo "  ✓ Copied $doc"
     else
-        echo -e "${RED}  ✗ Warning: $doc not found${NC}"
+        echo "  - Skipped $doc (not found)"
     fi
 done
 
@@ -96,8 +103,8 @@ fi
 cat > build/distribution.xml << EOF
 <?xml version="1.0" encoding="utf-8"?>
 <installer-gui-script minSpecVersion="1">
-    <title>Mac Dev Setup</title>
-    <organization>com.company</organization>
+    <title>SBS Federal Mac Dev Setup</title>
+    <organization>com.sbsfederal</organization>
     <domains enable_localSystem="true"/>
     <options customize="never" require-scripts="false" hostArchitectures="x86_64,arm64"/>
     <pkg-ref id="$IDENTIFIER"/>
