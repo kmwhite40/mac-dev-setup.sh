@@ -25,6 +25,12 @@ This package provides comprehensive documentation for deploying iPads with Micro
 
 ## Quick Start
 
+### For Windows Admins (Recommended Start)
+1. Follow the complete guide: [07-WINDOWS-ADMIN-GUIDE.md](docs/07-WINDOWS-ADMIN-GUIDE.md)
+   - Step-by-step browser-based Intune configuration
+   - No Mac required for VPP app setup
+   - Includes screenshots-ready navigation paths
+
 ### For New Deployments
 1. Complete pre-checks: [06-DEPLOYMENT-RUNBOOK.md](docs/06-DEPLOYMENT-RUNBOOK.md#pre-checks)
 2. Configure ABM/ADE: [02-ABM-ADE-DEPLOYMENT.md](docs/02-ABM-ADE-DEPLOYMENT.md)
@@ -48,6 +54,7 @@ This package provides comprehensive documentation for deploying iPads with Micro
 | [04-APPLE-CONFIGURATOR-FALLBACK.md](docs/04-APPLE-CONFIGURATOR-FALLBACK.md) | Fallback when ABM/ADE unavailable |
 | [05-FIELD-REMEDIATION.md](docs/05-FIELD-REMEDIATION.md) | Fix devices already in the field |
 | [06-DEPLOYMENT-RUNBOOK.md](docs/06-DEPLOYMENT-RUNBOOK.md) | Complete deployment runbook |
+| [07-WINDOWS-ADMIN-GUIDE.md](docs/07-WINDOWS-ADMIN-GUIDE.md) | **Windows admin step-by-step Intune setup** |
 
 ---
 
