@@ -22,6 +22,8 @@
 10. [Troubleshooting](#troubleshooting)
 11. [FAQ](#faq)
 
+> **Windows Admin?** See [WINDOWS-ADMIN-GUIDE.md](WINDOWS-ADMIN-GUIDE.md) for step-by-step browser-based instructions.
+
 ---
 
 ## Overview

@@ -20,6 +20,8 @@
 | Min OS | macOS 10.15 |
 | Disk Space | 20 GB |
 
+> **Windows Admin?** See [WINDOWS-ADMIN-GUIDE.md](WINDOWS-ADMIN-GUIDE.md) for browser-based Intune configuration steps.
+
 ---
 
 ## Pre-Deployment Checklist
