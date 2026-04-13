@@ -1,0 +1,25 @@
+# =============================================================================
+# Brewfile.design — Design team packages
+# =============================================================================
+# Extends Brewfile.base — run both: brew bundle --file=profiles/Brewfile.base
+#                                    brew bundle --file=profiles/Brewfile.design
+# =============================================================================
+
+tap "homebrew/bundle"
+
+# Design tools
+cask "figma"
+cask "sketch"
+
+# Image & media utilities
+brew "imagemagick"
+brew "ffmpeg"
+brew "webp"
+
+# Browsers for cross-testing
+cask "google-chrome"
+cask "firefox"
+
+# Productivity
+cask "obsidian"
+cask "notion"

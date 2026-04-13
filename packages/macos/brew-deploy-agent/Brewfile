@@ -1,0 +1,74 @@
+# =============================================================================
+# Brewfile — Declarative package list for brew-deploy-agent
+# =============================================================================
+#
+# This is the default Brewfile. For machine-specific profiles, see profiles/.
+#
+# Usage:
+#   brew bundle check --file=Brewfile
+#   brew bundle install --file=Brewfile
+#
+# Docs: https://github.com/Homebrew/homebrew-bundle
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Taps (third-party repositories)
+# ---------------------------------------------------------------------------
+tap "homebrew/bundle"
+
+# ---------------------------------------------------------------------------
+# Formulae (CLI tools)
+# ---------------------------------------------------------------------------
+
+# Version control
+brew "git"
+brew "gh"
+brew "glab"
+
+# Languages & runtimes
+brew "node"
+brew "python"
+brew "openjdk"
+brew "go"
+
+# Build tools
+brew "maven"
+brew "cmake"
+
+# Cloud & infrastructure
+brew "awscli"
+brew "azure-cli"
+brew "terraform"
+brew "kubectl"
+brew "helm"
+
+# Utilities
+brew "jq"
+brew "yq"
+brew "curl"
+brew "httpie"
+brew "tree"
+brew "watch"
+brew "coreutils"
+
+# ---------------------------------------------------------------------------
+# Casks (GUI applications)
+# ---------------------------------------------------------------------------
+
+# Terminals & editors
+cask "iterm2"
+cask "visual-studio-code"
+cask "cursor"
+
+# Containers
+cask "docker"
+
+# API & database tools
+cask "postman"
+cask "dbeaver-community"
+
+# Productivity
+cask "obsidian"
+
+# Git clients
+cask "github"

@@ -3,7 +3,7 @@
 ## SBS Federal IT Administration Guide
 
 **Version:** 2.1.0
-**Last Updated:** 2025-01-05
+**Last Updated:** 2025-01-30
 **Contact:** it@sbsfederal.com
 
 ---
@@ -212,82 +212,168 @@ rm -rf package_root
 
 ## Uploading to Intune
 
-### Step 1: Access Microsoft Endpoint Manager
+### Step 1: Sign In to Intune Admin Center
 
-1. Navigate to: https://intune.microsoft.com
-2. Sign in with your Intune admin credentials
-3. Go to **Apps** > **macOS**
+1. Open your browser (Microsoft Edge recommended)
+2. Navigate to: **https://intune.microsoft.com**
+3. Sign in with your Intune administrator credentials
+4. Complete MFA authentication if prompted
 
-### Step 2: Add New App
+### Step 2: Navigate to macOS Apps
 
-1. Click **+ Add**
-2. Select app type: **Line-of-business app**
-3. Click **Select**
+**Navigation Path:**
+```
+Apps (left sidebar) → macOS → + Add
+```
 
-### Step 3: Configure App Information
+1. Click **Apps** in the left navigation sidebar
+2. Click the **macOS** tab at the top
+3. Click the **+ Add** button
+
+### Step 3: Select App Type
+
+1. In the "Select app type" panel that appears on the right:
+   - Click the dropdown menu
+   - Select **Line-of-business app**
+2. Click **Select** at the bottom
+
+### Step 4: Upload App Package File
+
+1. Click **Select app package file**
+2. In the file picker dialog:
+   - Click **Browse** (or the folder icon)
+   - Navigate to where you saved the `.intunemac` file
+   - Select: `MacDevSetup-2.1.0.intunemac`
+3. Wait for the file to upload (progress bar shows status)
+4. Verify the file info shows:
+   - Name: MacDevSetup-2.1.0
+   - Size: (varies, typically 10-50 KB)
+5. Click **OK**
+
+### Step 5: Configure App Information
+
+Fill in the following fields:
 
 | Field | Value |
 |-------|-------|
 | **Name** | SBS Federal Mac Dev Setup |
-| **Description** | Automated development environment setup. Installs Docker, VS Code, Cursor, IntelliJ, Kubernetes tools, cloud CLIs, and more. Run `mac-dev-setup` after installation. |
+| **Description** | Automated development environment setup for macOS. Installs Docker, VS Code, Cursor, IntelliJ, Kubernetes tools, cloud CLIs, and more. After installation, open Terminal and run: mac-dev-setup |
 | **Publisher** | SBS Federal |
 | **App Version** | 2.1.0 |
 | **Category** | Developer Tools |
-| **Information URL** | (optional) |
+| **Information URL** | *(optional - leave blank or enter docs URL)* |
+| **Privacy URL** | *(optional)* |
 | **Developer** | SBS Federal IT |
 | **Owner** | IT Department |
-| **Notes** | Requires 20GB disk, internet connection. User runs `mac-dev-setup` after Intune install. |
+| **Notes** | Requires 20GB free disk space and internet connection. User must run 'mac-dev-setup' command in Terminal after Intune installation completes. |
 
-### Step 4: Upload Package
-
-1. Click **Select app package file**
-2. Browse to and select: `MacDevSetup-2.1.0.intunemac`
-3. Click **OK**
-4. Wait for upload to complete
-
-### Step 5: Configure Detection Rules
-
-**Option A: Custom Script Detection (Recommended)**
-
-1. Select **Use custom detection script**
-2. Upload `detection.sh`
-3. Configure:
-   | Setting | Value |
-   |---------|-------|
-   | Run script as 32-bit process | No |
-   | Enforce script signature check | No |
-
-**Option B: File-Based Detection**
-
-| Setting | Value |
-|---------|-------|
-| Detection rule type | File |
-| Path | /Library/Application Support/MacDevSetup |
-| File or folder | version.txt |
-| Detection method | File or folder exists |
+Click **Next**
 
 ### Step 6: Configure Requirements
 
 | Field | Value |
 |-------|-------|
-| **Operating system** | macOS 10.15 or later |
-| **Architecture** | x64, ARM64 |
-| **Disk space required** | 20480 MB (20 GB) |
-| **Physical memory required** | 4096 MB |
+| **Minimum operating system** | macOS 10.15 (Catalina) or later |
 
-### Step 7: Configure Installation Settings
+**Note:** Leave other requirement fields as default unless you have specific needs.
 
-| Field | Value |
-|-------|-------|
-| **Pre-install script** | (none - handled by package) |
-| **Post-install script** | (none - handled by package) |
-| **Uninstall script** | Upload `uninstall.sh` |
+Click **Next**
 
-### Step 8: Review + Create
+### Step 7: Configure Detection Rules
 
-1. Review all settings
+**Detection rule type:** Select **Use a custom detection script**
+
+1. Click **Upload** (or the folder icon) next to "Script file"
+2. Navigate to and select the `detection.sh` file from the intune folder
+3. Configure the following settings:
+
+| Setting | Value |
+|---------|-------|
+| Run script as 32-bit process on 64-bit clients | **No** |
+| Enforce script signature check | **No** |
+
+**Alternative: File-Based Detection** *(if not using script)*
+
+If you prefer file-based detection instead of a script:
+
+| Setting | Value |
+|---------|-------|
+| Detection rule type | File |
+| Path | `/Library/Application Support/MacDevSetup` |
+| File or folder | `version.txt` |
+| Detection method | File or folder exists |
+
+Click **Next**
+
+### Step 8: Scope Tags (Optional)
+
+- If your organization uses RBAC scope tags, select the appropriate tags
+- If not using scope tags, leave as default
+
+Click **Next**
+
+### Step 9: Configure Assignments
+
+**For Available Installation (Recommended for Developer Tools):**
+
+1. Under **Available for enrolled devices**, click **+ Add group**
+2. In the search box, type your device/user group name
+3. Select the appropriate group(s):
+   - Example: `Macs - Developer Devices`
+   - Example: `Mac Users - Engineering`
+4. Click **Select**
+
+**For Required Installation (Auto-install):**
+
+1. Under **Required**, click **+ Add group**
+2. Search for and select your target group(s)
+3. Click **Select**
+
+**Recommended Groups:**
+| Group Purpose | Suggested Name |
+|---------------|----------------|
+| Developer Macs | `Macs - Developer Devices` |
+| Engineering Users | `Mac Users - Engineering` |
+| IT Test Devices | `Macs - IT Test Group` |
+
+Click **Next**
+
+### Step 10: Review + Create
+
+1. **Review all settings carefully:**
+   - App name: SBS Federal Mac Dev Setup
+   - Publisher: SBS Federal
+   - Version: 2.1.0
+   - Detection: Custom script (or File-based)
+   - Assignments: Your selected groups
+
 2. Click **Create**
-3. Wait for app to be created and uploaded
+
+3. **Wait for deployment:**
+   - Progress bar shows upload status
+   - May take 1-5 minutes depending on file size
+   - Status changes to "Created" when complete
+
+4. **Verify the app was created:**
+   - Navigate to: **Apps** → **macOS**
+   - Find "SBS Federal Mac Dev Setup" in the app list
+   - Click on it to view properties
+
+### Step 11: Verify App Configuration
+
+After creation, click on the app to verify:
+
+1. **Properties tab:**
+   - Confirm all app information is correct
+   - Version shows 2.1.0
+
+2. **Assignments tab:**
+   - Verify correct groups are assigned
+   - Check assignment type (Available vs Required)
+
+3. **Device install status:**
+   - Initially shows "Pending" for assigned devices
+   - Updates as devices check in and install
 
 ---
 

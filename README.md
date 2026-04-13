@@ -61,6 +61,27 @@ DevHelpDeskTools provides IT administrators and help desk teams with powerful au
 
 **[View Documentation →](packages/macos/m365-installer/)**
 
+#### 4. COSMOS Deployment
+**Automated COSMOS development environment setup with weekly auto-updates**
+
+- 🌐 Installs 6 browsers (Chrome, Edge, Brave, Firefox, DuckDuckGo manual)
+- 🛠️ Installs 12 GUI applications (Docker, Podman, VS Code, WebStorm, etc.)
+- 💻 Installs 20+ CLI tools (git, kubectl, terraform, AWS/Azure/GCP CLIs, etc.)
+- 📦 Uses NVM for Node.js version management (not direct node install)
+- 🔄 Weekly automatic updates via launchd (every Sunday at 10:00 AM)
+- 🔔 macOS notifications on update success/failure
+- 📝 Comprehensive timestamped logging
+
+**[View Deployment Guide →](packages/macos/mac-dev-setup/docs/COSMOS-DEPLOYMENT-GUIDE.md)**
+
+**Quick Install (download and run):**
+```bash
+curl -fsSL -o ~/Desktop/Cosmos_Deployment.sh \
+  "https://raw.githubusercontent.com/kmwhite40/mac-dev-setup.sh/main/packages/macos/mac-dev-setup/scripts/Cosmos_Deployment.sh"
+chmod +x ~/Desktop/Cosmos_Deployment.sh
+~/Desktop/Cosmos_Deployment.sh
+```
+
 ---
 
 ### Windows Packages
@@ -113,6 +134,11 @@ cd packages/macos/mac-dev-setup/scripts/
 chmod +x mac-dev-setup.sh
 ./mac-dev-setup.sh
 
+# COSMOS Deployment
+cd packages/macos/mac-dev-setup/scripts/
+chmod +x Cosmos_Deployment.sh
+./Cosmos_Deployment.sh
+
 # macOS Compliance Scanner
 cd packages/macos/compliance-scanner/scripts/
 chmod +x nist-800-53-scanner.sh
@@ -162,7 +188,8 @@ DevHelpDeskTools/
     │   │
     │   ├── mac-dev-setup/             # Mac Dev Setup Package
     │   │   ├── scripts/
-    │   │   │   └── mac-dev-setup.sh   # Main setup script
+    │   │   │   ├── mac-dev-setup.sh   # Main setup script
+    │   │   │   └── Cosmos_Deployment.sh # COSMOS environment setup
     │   │   ├── intune/                # Intune deployment files
     │   │   │   ├── install.sh
     │   │   │   ├── uninstall.sh
@@ -437,6 +464,9 @@ All scripts and tools are for exclusive use by SBS Federal employees and authori
 # Mac Dev Setup
 ./packages/macos/mac-dev-setup/scripts/mac-dev-setup.sh
 
+# COSMOS Deployment
+./packages/macos/mac-dev-setup/scripts/Cosmos_Deployment.sh
+
 # M365 Installer
 ./packages/macos/m365-installer/scripts/m365-installer.sh
 
@@ -473,7 +503,7 @@ notepad %USERPROFILE%\.nist-compliance\scanner.log
 
 ## 📊 Project Statistics
 
-- **Total Packages:** 6 (3 macOS + 3 Windows)
+- **Total Packages:** 7 (4 macOS + 3 Windows)
 - **Total Files:** 60+
 - **Total Lines of Code:** 15,000+
 - **Documentation Pages:** 20+

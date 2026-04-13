@@ -1,0 +1,16 @@
+# =============================================================================
+# Brewfile.base — Minimal packages for all machines
+# =============================================================================
+
+tap "homebrew/bundle"
+
+# Core CLI tools
+brew "git"
+brew "curl"
+brew "jq"
+brew "tree"
+brew "coreutils"
+
+# Core GUI applications
+cask "iterm2"
+cask "visual-studio-code"

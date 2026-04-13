@@ -1,0 +1,45 @@
+# =============================================================================
+# Brewfile.dev — Developer workstation packages
+# =============================================================================
+# Extends Brewfile.base — run both: brew bundle --file=profiles/Brewfile.base
+#                                    brew bundle --file=profiles/Brewfile.dev
+# =============================================================================
+
+tap "homebrew/bundle"
+
+# Languages & runtimes
+brew "node"
+brew "python"
+brew "openjdk"
+brew "go"
+brew "dotnet"
+
+# Build tools
+brew "maven"
+brew "cmake"
+
+# Version control
+brew "gh"
+brew "glab"
+
+# Cloud & infrastructure
+brew "awscli"
+brew "azure-cli"
+brew "terraform"
+brew "kubectl"
+brew "helm"
+brew "k9s"
+
+# Testing & debugging
+brew "httpie"
+brew "yq"
+brew "watch"
+brew "k6"
+
+# GUI applications
+cask "docker"
+cask "cursor"
+cask "postman"
+cask "dbeaver-community"
+cask "github"
+cask "intellij-idea-ce"

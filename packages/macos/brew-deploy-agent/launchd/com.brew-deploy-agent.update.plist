@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Agent label (must match filename without .plist) -->
+    <key>Label</key>
+    <string>com.brew-deploy-agent.update</string>
+
+    <!-- Script to execute -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>__UPDATE_SCRIPT_PATH__</string>
+        <string>--notify</string>
+    </array>
+
+    <!-- Run daily at 11:00 AM -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>11</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <!-- Standard output and error go to the log directory -->
+    <key>StandardOutPath</key>
+    <string>__LOG_DIR__/launchd-stdout.log</string>
+    <key>StandardErrorPath</key>
+    <string>__LOG_DIR__/launchd-stderr.log</string>
+
+    <!-- Run as current user (LaunchAgent, not LaunchDaemon) -->
+    <key>RunAtLoad</key>
+    <false/>
+
+    <!-- Process priority — low so it doesn't interfere with user work -->
+    <key>Nice</key>
+    <integer>10</integer>
+
+    <!-- Environment: ensure Homebrew is discoverable -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+</dict>
+</plist>
